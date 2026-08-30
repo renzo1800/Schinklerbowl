@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Dark Gradient -->
+    <radialGradient id="bgCanvas" cx="50%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#182334"/>
+      <stop offset="65%" stop-color="#0d141f"/>
+      <stop offset="100%" stop-color="#06090e"/>
+    </radialGradient>
+
+    <!-- Sleeper Electric Teal Gradient -->
+    <linearGradient id="sleeperTeal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="45%" stop-color="#00ceb8"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+
+    <!-- Chalk Playbook Accent -->
+    <linearGradient id="chalkAccent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#94a3b8"/>
+      <stop offset="100%" stop-color="#475569"/>
+    </linearGradient>
+
+    <!-- Soft Glow Filter -->
+    <filter id="glowDrop" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000000" flood-opacity="0.65"/>
+      <feDropShadow dx="0" dy="0" stdDeviation="20" flood-color="#00ceb8" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- Base Icon Shape -->
+  <rect width="512" height="512" rx="118" fill="url(#bgCanvas)"/>
+  <rect width="508" height="508" x="2" y="2" rx="116" fill="none" stroke="rgba(0, 206, 184, 0.2)" stroke-width="3"/>
+
+  <!-- Playbook Grid & Tactical Markings (Background Details) -->
+  <g stroke="#1e293b" stroke-width="2" stroke-dasharray="6,6">
+    <line x1="80" y1="170" x2="432" y2="170"/>
+    <line x1="80" y1="340" x2="432" y2="340"/>
+  </g>
+
+  <!-- Playbook "X's and O's" Elements -->
+  <!-- Top Left Tactical "O" -->
+  <circle cx="110" cy="115" r="20" fill="none" stroke="url(#chalkAccent)" stroke-width="9"/>
+
+  <!-- Top Right Tactical "X" -->
+  <g stroke="#38bdf8" stroke-width="9" stroke-linecap="round" opacity="0.85">
+    <line x1="390" y1="95" x2="430" y2="135"/>
+    <line x1="430" y1="95" x2="390" y2="135"/>
+  </g>
+
+  <!-- Bottom Left Tactical "X" -->
+  <g stroke="url(#chalkAccent)" stroke-width="9" stroke-linecap="round">
+    <line x1="90" y1="380" x2="130" y2="420"/>
+    <line x1="130" y1="380" x2="90" y2="420"/>
+  </g>
+
+  <!-- Center-Main: The Sleeper Geometric "S" Shape -->
+  <g filter="url(#glowDrop)">
+    <!-- Main Bold S Spine -->
+    <path d="M 370 145 
+             C 370 95, 305 75, 245 75 
+             C 175 75, 140 115, 140 170 
+             C 140 240, 365 220, 365 330 
+             C 365 405, 305 435, 235 435 
+             C 170 435, 130 395, 130 355" 
+          fill="none" 
+          stroke="url(#sleeperTeal)" 
+          stroke-width="48" 
+          stroke-linecap="round" 
+          stroke-linejoin="round"/>
+  </g>
+
+  <!-- Calculator / Math Ledger Integrated Keys -->
+  <!-- Top Curve: Plus (+) Button -->
+  <g transform="translate(365, 145)" filter="url(#glowDrop)">
+    <circle cx="0" cy="0" r="28" fill="#1e293b" stroke="#38bdf8" stroke-width="4"/>
+    <line x1="-12" y1="0" x2="12" y2="0" stroke="#38bdf8" stroke-width="5" stroke-linecap="round"/>
+    <line x1="0" y1="-12" x2="0" y2="12" stroke="#38bdf8" stroke-width="5" stroke-linecap="round"/>
+  </g>
+
+  <!-- Bottom Curve: Minus (-) Button -->
+  <g transform="translate(130, 355)" filter="url(#glowDrop)">
+    <circle cx="0" cy="0" r="28" fill="#1e293b" stroke="#ef4444" stroke-width="4"/>
+    <line x1="-12" y1="0" x2="12" y2="0" stroke="#ef4444" stroke-width="5" stroke-linecap="round"/>
+  </g>
+
+  <!-- Bottom Right: Equals (=) Output Badge -->
+  <g transform="translate(390, 390)" filter="url(#glowDrop)">
+    <rect x="-32" y="-24" width="64" height="48" rx="12" fill="#00ceb8"/>
+    <line x1="-14" y1="-6" x2="14" y2="-6" stroke="#062e28" stroke-width="5" stroke-linecap="round"/>
+    <line x1="-14" y1="6" x2="14" y2="6" stroke="#062e28" stroke-width="5" stroke-linecap="round"/>
+  </g>
+</svg>
