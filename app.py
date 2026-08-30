@@ -15,21 +15,31 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- Sleeper Dark Theme CSS Injection ---
+# --- Sleeper Dark Theme & Strict Footer/Header Removal CSS ---
 st.markdown("""
 <style>
-    /* Hide Streamlit Native Footers and Watermarks */
+    /* ====================================================
+       1. COMPLETE HIDE: ALL FOOTERS, BOTTOM BARS & BADGES
+       ==================================================== */
     #MainMenu {visibility: hidden !important; display: none !important;}
-    footer {visibility: hidden !important; display: none !important;}
-    [data-testid="stDecoration"] {display: none !important;}
-    [data-testid="stStatusWidget"] {display: none !important;}
+    footer {visibility: hidden !important; display: none !important; height: 0 !important;}
+    
+    [data-testid="stFooter"] {visibility: hidden !important; display: none !important; height: 0 !important;}
+    [data-testid="stBottom"] {visibility: hidden !important; display: none !important;}
+    [data-testid="stDecoration"] {visibility: hidden !important; display: none !important;}
+    [data-testid="stStatusWidget"] {visibility: hidden !important; display: none !important;}
     .stDeployButton {display: none !important;}
     #viewer-badge {display: none !important;}
+    div[class*="viewerBadge"] {display: none !important;}
+    div[class*="stBottom"] {display: none !important;}
+    div.embeddedAppMetaInfoBar_container {display: none !important;}
     
-    /* Screen Margins */
+    /* ====================================================
+       2. TIGHTEN SCREEN MARGINS FOR CLEAN MOBILE/APP FEEL
+       ==================================================== */
     .block-container {
         padding-top: 1.2rem !important;
-        padding-bottom: 2rem !important;
+        padding-bottom: 0.5rem !important;
         padding-left: 1rem !important;
         padding-right: 1rem !important;
     }
@@ -58,14 +68,6 @@ st.markdown("""
         margin-bottom: 4px;
     }
     
-    .control-panel {
-        background-color: #151d2a;
-        border: 1px solid #253347;
-        border-radius: 14px;
-        padding: 16px 20px;
-        margin-bottom: 20px;
-    }
-
     .champ-card {
         background: linear-gradient(145deg, #064e3b 0%, #022c22 100%);
         border: 2px solid #10b981;
