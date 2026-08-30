@@ -10,7 +10,7 @@ st.set_page_config(
 )
 
 # ==========================================
-# CONFIGURE YOUR LEAGUE ID
+# DEFAULT LEAGUE ID CONFIGURED
 # ==========================================
 DEFAULT_LEAGUE_ID = "1312109425275736064"
 
@@ -19,7 +19,6 @@ BASE_URL = "https://api.sleeper.app/v1"
 # --- Custom Sleeper Aesthetic CSS Injection ---
 st.markdown("""
 <style>
-    /* Global Background & Font styling */
     .stApp {
         background-color: #0d131d;
         color: #f1f5f9;
@@ -61,14 +60,66 @@ st.markdown("""
         box-shadow: 0 8px 24px rgba(239, 68, 68, 0.2);
     }
     
-    /* Trade Item Cards */
-    .trade-card {
-        background-color: #172030;
-        border: 1px solid #2a374f;
-        border-radius: 12px;
+    /* Leaderboard Manager Cards */
+    .leaderboard-card {
+        background: #151d2a;
+        border: 1px solid #222f44;
+        border-radius: 14px;
         padding: 16px 20px;
-        margin-bottom: 16px;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: transform 0.15s ease, border-color 0.15s ease;
     }
+    .leaderboard-card:hover {
+        border-color: #00ceb8;
+        transform: translateY(-2px);
+    }
+    .rank-badge {
+        font-size: 1.1rem;
+        font-weight: 800;
+        width: 32px;
+        text-align: center;
+        color: #94a3b8;
+    }
+    .manager-avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 14px;
+        border: 2px solid #2a374f;
+    }
+    .net-pill-pos {
+        background-color: rgba(16, 185, 129, 0.15);
+        color: #34d399;
+        border: 1px solid #10b981;
+        padding: 6px 14px;
+        border-radius: 10px;
+        font-weight: 800;
+        font-size: 1.1rem;
+    }
+    .net-pill-neg {
+        background-color: rgba(239, 68, 68, 0.15);
+        color: #f87171;
+        border: 1px solid #ef4444;
+        padding: 6px 14px;
+        border-radius: 10px;
+        font-weight: 800;
+        font-size: 1.1rem;
+    }
+    .net-pill-even {
+        background-color: rgba(148, 163, 184, 0.15);
+        color: #cbd5e1;
+        border: 1px solid #64748b;
+        padding: 6px 14px;
+        border-radius: 10px;
+        font-weight: 800;
+        font-size: 1.1rem;
+    }
+
+    /* Trade Item Pills */
     .trade-pill {
         display: inline-block;
         padding: 4px 10px;
@@ -111,9 +162,11 @@ def get_mock_data():
         {
             "week": 3,
             "team_a": "Gridiron Gurus",
+            "avatar_a": None,
             "players_a": ["CeeDee Lamb (WR)", "Isiah Pacheco (RB)"],
             "pts_a": 218.4,
             "team_b": "Touchdown Titans",
+            "avatar_b": None,
             "players_b": ["Amon-Ra St. Brown (WR)"],
             "pts_b": 184.2,
             "winner": "Gridiron Gurus",
@@ -122,9 +175,11 @@ def get_mock_data():
         {
             "week": 6,
             "team_a": "Championship Bound",
+            "avatar_a": None,
             "players_a": ["Bijan Robinson (RB)"],
             "pts_a": 164.8,
             "team_b": "Touchdown Titans",
+            "avatar_b": None,
             "players_b": ["Breece Hall (RB)"],
             "pts_b": 202.5,
             "winner": "Touchdown Titans",
@@ -133,9 +188,11 @@ def get_mock_data():
         {
             "week": 8,
             "team_a": "Gridiron Gurus",
+            "avatar_a": None,
             "players_a": ["Josh Allen (QB)"],
             "pts_a": 194.0,
             "team_b": "Waiver Wire Kings",
+            "avatar_b": None,
             "players_b": ["Patrick Mahomes (QB)"],
             "pts_b": 142.6,
             "winner": "Gridiron Gurus",
@@ -147,10 +204,22 @@ def get_mock_data():
 def fetch_trade_ledger(league_id):
     try:
         users = requests.get(f"{BASE_URL}/league/{league_id}/users").json()
-        user_map = {u["user_id"]: u.get("display_name", "Unknown") for u in users}
+        user_map = {}
+        user_avatar_map = {}
+        for u in users:
+            uid = u["user_id"]
+            user_map[uid] = u.get("metadata", {}).get("team_name") or u.get("display_name", "Unknown")
+            avatar_id = u.get("avatar")
+            user_avatar_map[uid] = f"https://sleepercdn.com/avatars/thumbs/{avatar_id}" if avatar_id else None
 
         rosters = requests.get(f"{BASE_URL}/league/{league_id}/rosters").json()
-        roster_map = {r["roster_id"]: user_map.get(r["owner_id"], f"Team {r['roster_id']}") for r in rosters}
+        roster_map = {}
+        roster_avatar_map = {}
+        for r in rosters:
+            rid = r["roster_id"]
+            oid = r.get("owner_id")
+            roster_map[rid] = user_map.get(oid, f"Team {rid}")
+            roster_avatar_map[rid] = user_avatar_map.get(oid)
 
         players_data = requests.get(f"{BASE_URL}/players/nfl").json()
         player_names = {pid: p.get("full_name", pid) for pid, p in players_data.items()}
@@ -181,6 +250,7 @@ def fetch_trade_ledger(league_id):
 
                     team_a, team_b = roster_ids[0], roster_ids[1]
                     name_a, name_b = roster_map.get(team_a, f"Team {team_a}"), roster_map.get(team_b, f"Team {team_b}")
+                    avatar_a, avatar_b = roster_avatar_map.get(team_a), roster_avatar_map.get(team_b)
                     
                     players_a = [pid for pid, r_id in adds.items() if r_id == team_a]
                     players_b = [pid for pid, r_id in adds.items() if r_id == team_b]
@@ -198,9 +268,11 @@ def fetch_trade_ledger(league_id):
                     trade_list.append({
                         "week": week,
                         "team_a": name_a,
+                        "avatar_a": avatar_a,
                         "players_a": [player_names.get(p, p) for p in players_a] or ["Draft Picks / FAAB"],
                         "pts_a": round(pts_a, 1),
                         "team_b": name_b,
+                        "avatar_b": avatar_b,
                         "players_b": [player_names.get(p, p) for p in players_b] or ["Draft Picks / FAAB"],
                         "pts_b": round(pts_b, 1),
                         "winner": name_a if net_margin > 0 else (name_b if net_margin < 0 else "Even"),
@@ -217,9 +289,15 @@ def calculate_manager_standings(trades):
         diff_a = round(t["pts_a"] - t["pts_b"], 1)
         diff_b = round(t["pts_b"] - t["pts_a"], 1)
 
-        for tm in [team_a, team_b]:
+        for tm, av in [(team_a, t.get("avatar_a")), (team_b, t.get("avatar_b"))]:
             if tm not in standings:
-                standings[tm] = {"Trades": 0, "Points Gained": 0.0, "Points Given Up": 0.0, "Net +/-": 0.0}
+                standings[tm] = {
+                    "Trades": 0,
+                    "Points Gained": 0.0,
+                    "Points Given Up": 0.0,
+                    "Net +/-": 0.0,
+                    "Avatar": av
+                }
         
         standings[team_a]["Trades"] += 1
         standings[team_a]["Points Gained"] += t["pts_a"]
@@ -235,6 +313,7 @@ def calculate_manager_standings(trades):
     for manager, stats in standings.items():
         rows.append({
             "Manager": manager,
+            "Avatar": stats["Avatar"],
             "Trades": stats["Trades"],
             "Acquired Pts": round(stats["Points Gained"], 1),
             "Given Up Pts": round(stats["Points Given Up"], 1),
@@ -310,31 +389,51 @@ if trades:
             
         st.write("")
 
-    # 2. Main Tabs
-    tab_standings, tab_log = st.tabs(["📊 Manager Standings & Chart", "📜 Season Trade History"])
+    # 2. Tabs
+    tab_standings, tab_log = st.tabs(["📊 Manager Standings & Cards", "📜 Season Trade History"])
     
     with tab_standings:
         st.subheader("Leaderboard")
         
-        # Interactive Leaderboard Table
-        st.dataframe(
-            standings_df,
-            use_container_width=True,
-            hide_index=True,
-            column_config={
-                "Net Differential": st.column_config.NumberColumn(
-                    "Net +/- Margin",
-                    format="%+0.1f pts"
-                ),
-                "Acquired Pts": st.column_config.NumberColumn("Acquired Points", format="%.1f pts"),
-                "Given Up Pts": st.column_config.NumberColumn("Traded Away Points", format="%.1f pts"),
-                "Trades": st.column_config.NumberColumn("Total Deals")
-            }
-        )
+        # High-Energy Manager Standings Cards
+        default_avatar = "https://sleepercdn.com/images/v2/icons/player_default.webp"
+        
+        for idx, row in standings_df.iterrows():
+            rank = idx + 1
+            rank_icon = "🥇" if rank == 1 else ("🥈" if rank == 2 else ("🥉" if rank == 3 else f"#{rank}"))
+            avatar_url = row['Avatar'] if row['Avatar'] else default_avatar
+            
+            diff = row['Net Differential']
+            if diff > 0:
+                pill_class = "net-pill-pos"
+                pill_text = f"+{diff:.1f} pts"
+            elif diff < 0:
+                pill_class = "net-pill-neg"
+                pill_text = f"{diff:.1f} pts"
+            else:
+                pill_class = "net-pill-even"
+                pill_text = "0.0 pts"
+                
+            st.markdown(f"""
+            <div class="leaderboard-card">
+                <div style="display: flex; align-items: center;">
+                    <div class="rank-badge">{rank_icon}</div>
+                    <img src="{avatar_url}" class="manager-avatar" onerror="this.src='{default_avatar}'" />
+                    <div>
+                        <div style="font-size: 1.15rem; font-weight: 700; color: #ffffff;">{row['Manager']}</div>
+                        <div style="font-size: 0.85rem; color: #94a3b8;">
+                            {row['Trades']} deals &nbsp;|&nbsp; 🟢 Acquired: <span style="color: #cbd5e1; font-weight: 600;">{row['Acquired Pts']} pts</span> &nbsp;|&nbsp; 🔴 Traded Away: <span style="color: #cbd5e1; font-weight: 600;">{row['Given Up Pts']} pts</span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <span class="{pill_class}">{pill_text}</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
         
         st.divider()
-        st.subheader("Visual Net Margin Breakdown")
-        # Visual Bar Chart showing best to worst
+        st.subheader("Visual Net Differential Chart")
         chart_data = standings_df.set_index("Manager")["Net Differential"]
         st.bar_chart(chart_data)
 
