@@ -240,7 +240,7 @@ if trades:
             return f'color: {color}; font-weight: bold'
 
         st.dataframe(
-            standings_df.style.applymap(highlight_diff, subset=['Net Differential']),
+            standings_df.style.map(highlight_diff, subset=['Net Differential']),
             use_container_width=True,
             hide_index=True
         )
