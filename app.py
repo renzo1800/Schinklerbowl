@@ -119,20 +119,35 @@ st.markdown("""
         font-size: 1.1rem;
     }
 
-    /* Trade Item Pills */
+    /* Trade Result Pills */
+    .trade-pill-container {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        align-items: flex-end;
+    }
     .trade-pill {
         display: inline-block;
-        padding: 4px 10px;
-        border-radius: 9999px;
-        font-size: 0.8rem;
+        padding: 4px 12px;
+        border-radius: 8px;
+        font-size: 0.85rem;
         font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
+        text-align: right;
     }
     .pill-win {
-        background-color: rgba(0, 206, 184, 0.15);
-        color: #00ceb8;
-        border: 1px solid #00ceb8;
+        background-color: rgba(16, 185, 129, 0.15);
+        color: #34d399;
+        border: 1px solid #10b981;
+    }
+    .pill-loss {
+        background-color: rgba(239, 68, 68, 0.15);
+        color: #f87171;
+        border: 1px solid #ef4444;
+    }
+    .pill-even {
+        background-color: rgba(148, 163, 184, 0.15);
+        color: #cbd5e1;
+        border: 1px solid #64748b;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -170,6 +185,7 @@ def get_mock_data():
             "players_b": ["Amon-Ra St. Brown (WR)"],
             "pts_b": 184.2,
             "winner": "Gridiron Gurus (@FantasyKing99)",
+            "loser": "Touchdown Titans (@JoshAllenFan)",
             "margin": 34.2
         },
         {
@@ -183,6 +199,7 @@ def get_mock_data():
             "players_b": ["Breece Hall (RB)"],
             "pts_b": 202.5,
             "winner": "Touchdown Titans (@JoshAllenFan)",
+            "loser": "Championship Bound (@DynastyBro)",
             "margin": 37.7
         },
         {
@@ -196,6 +213,7 @@ def get_mock_data():
             "players_b": ["Patrick Mahomes (QB)"],
             "pts_b": 142.6,
             "winner": "Gridiron Gurus (@FantasyKing99)",
+            "loser": "Waiver Wire Kings (@BenchWarmer)",
             "margin": 51.4
         }
     ]
@@ -211,7 +229,6 @@ def fetch_trade_ledger(league_id):
             username = u.get("display_name", "")
             team_name = u.get("metadata", {}).get("team_name")
             
-            # Format: Team Name (@username) or simply @username
             if team_name and team_name != username:
                 formatted_name = f"{team_name} (@{username})"
             elif username:
@@ -276,6 +293,13 @@ def fetch_trade_ledger(league_id):
                     
                     net_margin = round(pts_a - pts_b, 1)
                     
+                    if net_margin > 0:
+                        winner, loser = name_a, name_b
+                    elif net_margin < 0:
+                        winner, loser = name_b, name_a
+                    else:
+                        winner, loser = "Even", "Even"
+
                     trade_list.append({
                         "week": week,
                         "team_a": name_a,
@@ -286,7 +310,8 @@ def fetch_trade_ledger(league_id):
                         "avatar_b": avatar_b,
                         "players_b": [player_names.get(p, p) for p in players_b] or ["Draft Picks / FAAB"],
                         "pts_b": round(pts_b, 1),
-                        "winner": name_a if net_margin > 0 else (name_b if net_margin < 0 else "Even"),
+                        "winner": winner,
+                        "loser": loser,
                         "margin": abs(net_margin)
                     })
         return trade_list
@@ -451,9 +476,22 @@ if trades:
         st.subheader("Completed Trades Log")
         for t in trades:
             with st.container(border=True):
-                h1, h2 = st.columns([3, 1])
+                h1, h2 = st.columns([3, 2])
                 h1.markdown(f"#### 📅 Week {t['week']} Transaction")
-                h2.markdown(f"<span class='trade-pill pill-win'>👑 Leader: {t['winner']} (+{t['margin']} pts)</span>", unsafe_allow_html=True)
+                
+                if t['winner'] != "Even":
+                    h2.markdown(f"""
+                    <div class="trade-pill-container">
+                        <span class="trade-pill pill-win">👑 Winner: {t['winner']} (+{t['margin']} pts)</span>
+                        <span class="trade-pill pill-loss">🤡 Loser: {t['loser']} (-{t['margin']} pts)</span>
+                    </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    h2.markdown(f"""
+                    <div class="trade-pill-container">
+                        <span class="trade-pill pill-even">⚖️ Even Trade (0.0 pts)</span>
+                    </div>
+                    """, unsafe_allow_html=True)
                 
                 c1, c2 = st.columns(2)
                 with c1:
