@@ -2,18 +2,39 @@ import streamlit as st
 import requests
 import pandas as pd
 
-st.set_page_config(page_title="Sleeper Trade Winner Tracker", page_icon="🏈", layout="wide")
+st.set_page_config(page_title="Sleeper Trade Ledger", page_icon="🏈", layout="wide")
 
-# Custom Title & Header
-st.title("🏈 Sleeper Fantasy Trade Ledger")
-st.markdown("Track weekly fantasy point differentials to see who **won** or **lost** their trades.")
+# ==========================================
+# 1. CONFIGURE YOUR DEFAULT LEAGUE ID HERE
+# ==========================================
+DEFAULT_LEAGUE_ID = "1312109425275736064"  # Paste your current League ID here
 
-league_id = st.text_input("Enter Sleeper League ID:", placeholder="e.g. 104900000000000000")
+BASE_URL = "https://api.sleeper.app/v1"
+
+@st.cache_data(ttl=86400)
+def discover_all_seasons(current_league_id):
+    """Recursively walks backwards using previous_league_id to find all historical years."""
+    seasons = {} # e.g., {"2024 (Current)": "1049...", "2023": "9823...", "2022": "8712..."}
+    curr_id = current_league_id
+    is_first = True
+    
+    while curr_id:
+        try:
+            res = requests.get(f"{BASE_URL}/league/{curr_id}").json()
+            if not res or "season" not in res:
+                break
+            year = res.get("season", "Unknown")
+            label = f"{year} Season" + (" (Current)" if is_first else "")
+            seasons[label] = curr_id
+            curr_id = res.get("previous_league_id")
+            is_first = False
+        except Exception:
+            break
+    return seasons
 
 @st.cache_data(ttl=3600)
 def fetch_trade_ledger(league_id):
-    BASE_URL = "https://api.sleeper.app/v1"
-    
+    # Fetch League metadata
     users = requests.get(f"{BASE_URL}/league/{league_id}/users").json()
     user_map = {u["user_id"]: u.get("display_name", "Unknown") for u in users}
 
@@ -23,6 +44,7 @@ def fetch_trade_ledger(league_id):
     players_data = requests.get(f"{BASE_URL}/players/nfl").json()
     player_names = {pid: p.get("full_name", pid) for pid, p in players_data.items()}
 
+    # Fetch weekly matchup points for that year
     weekly_points = {}
     for week in range(1, 19):
         res = requests.get(f"{BASE_URL}/league/{league_id}/matchups/{week}").json()
@@ -34,6 +56,7 @@ def fetch_trade_ledger(league_id):
                 for pid, pts in match["players_points"].items():
                     weekly_points[week][pid] = pts
 
+    # Fetch completed transactions
     trade_list = []
     for week in range(1, 19):
         transactions = requests.get(f"{BASE_URL}/league/{league_id}/transactions/{week}").json()
@@ -76,44 +99,59 @@ def fetch_trade_ledger(league_id):
                 })
     return trade_list
 
-if league_id:
-    with st.spinner("Fetching transaction history..."):
-        trades = fetch_trade_ledger(league_id)
+# Sidebar: Season Selector
+with st.sidebar:
+    st.header("🏈 League Settings")
+    active_league_id = st.text_input("League ID", value=DEFAULT_LEAGUE_ID)
+    
+    selected_id = active_league_id
+    if active_league_id and active_league_id != "YOUR_CURRENT_LEAGUE_ID_HERE":
+        season_history = discover_all_seasons(active_league_id)
+        if len(season_history) > 1:
+            selected_season_label = st.selectbox("Select Season Year", options=list(season_history.keys()))
+            selected_id = season_history[selected_season_label]
+        elif len(season_history) == 1:
+            st.caption(f"Showing: {list(season_history.keys())[0]}")
+    st.divider()
+
+# Main Dashboard
+st.title("🏈 Sleeper Fantasy Trade Ledger")
+
+if selected_id and selected_id != "YOUR_CURRENT_LEAGUE_ID_HERE":
+    with st.spinner("Fetching transaction and scoring history..."):
+        trades = fetch_trade_ledger(selected_id)
         
     if trades:
-        # 1. Top KPI Metric Cards
         total_margin = sum(t["margin"] for t in trades)
         biggest_fleece = max(trades, key=lambda x: x["margin"])
         
         col1, col2, col3 = st.columns(3)
-        col1.metric("Total Trades Made", len(trades))
-        col2.metric("Biggest Point Swing", f"+{biggest_fleece['margin']} pts", f"Won by {biggest_fleece['winner']}")
+        col1.metric("Total Completed Trades", len(trades))
+        col2.metric("Biggest Point Swing", f"+{biggest_fleece['margin']} pts", f"Leader: {biggest_fleece['winner']}")
         col3.metric("Avg Margin per Trade", f"{round(total_margin/len(trades), 1)} pts")
 
         st.divider()
-
-        # 2. Visual Trade Cards
-        st.subheader("Trade-by-Trade Breakdown")
+        st.subheader("Trade Breakdown")
         
         for t in trades:
             with st.container(border=True):
                 head1, head2 = st.columns([3, 1])
                 head1.markdown(f"#### 📅 Week {t['week']} Trade")
-                head2.markdown(f"**Leader:** :green[{t['winner']}] (+{t['margin']} pts)")
+                head2.markdown(f"**Winner:** :green[{t['winner']}] (+{t['margin']} pts)")
                 
                 c1, c2 = st.columns(2)
                 with c1:
                     st.markdown(f"**{t['team_a']} received:**")
                     for p in t['players_a']:
                         st.markdown(f"- `{p}`")
-                    st.metric(label="Total Post-Trade Points", value=f"{t['pts_a']} pts")
+                    st.metric(label="Post-Trade Points Scored", value=f"{t['pts_a']} pts")
                     
                 with c2:
                     st.markdown(f"**{t['team_b']} received:**")
                     for p in t['players_b']:
                         st.markdown(f"- `{p}`")
-                    st.metric(label="Total Post-Trade Points", value=f"{t['pts_b']} pts")
+                    st.metric(label="Post-Trade Points Scored", value=f"{t['pts_b']} pts")
     else:
-        st.info("No completed trades found for this League ID.")
-
-
+        st.info("No completed trades found for the selected season.")
+else:
+    st.warning("Please configure your League ID in the code or sidebar.")
