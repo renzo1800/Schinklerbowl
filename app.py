@@ -15,35 +15,40 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- Sleeper Dark Theme & Strict Footer/Header Removal CSS ---
+# --- Reinforced Sleeper Dark Theme & Strict Footer/Header Elimination ---
 st.markdown("""
 <style>
     /* ====================================================
-       1. COMPLETE HIDE: ALL FOOTERS, BOTTOM BARS & BADGES
+       1. ELIMINATE ALL STREAMLIT FOOTERS, BADGES & BOTTOM BARS
        ==================================================== */
-    #MainMenu {visibility: hidden !important; display: none !important;}
-    footer {visibility: hidden !important; display: none !important; height: 0 !important;}
-    
-    [data-testid="stFooter"] {visibility: hidden !important; display: none !important; height: 0 !important;}
-    [data-testid="stBottom"] {visibility: hidden !important; display: none !important;}
-    [data-testid="stDecoration"] {visibility: hidden !important; display: none !important;}
-    [data-testid="stStatusWidget"] {visibility: hidden !important; display: none !important;}
+    footer {display: none !important; visibility: hidden !important; height: 0px !important;}
+    [data-testid="stFooter"] {display: none !important; visibility: hidden !important; height: 0px !important;}
+    [data-testid="stBottom"] {display: none !important; visibility: hidden !important;}
+    [data-testid="stStatusWidget"] {display: none !important; visibility: hidden !important;}
+    [data-testid="stDecoration"] {display: none !important;}
     .stDeployButton {display: none !important;}
+    #MainMenu {display: none !important; visibility: hidden !important;}
     #viewer-badge {display: none !important;}
     div[class*="viewerBadge"] {display: none !important;}
     div[class*="stBottom"] {display: none !important;}
+    div[class*="StatusWidget"] {display: none !important;}
+    div[class*="FloatingMenu"] {display: none !important;}
     div.embeddedAppMetaInfoBar_container {display: none !important;}
-    
+
     /* ====================================================
-       2. TIGHTEN SCREEN MARGINS FOR CLEAN MOBILE/APP FEEL
+       2. TIGHTEN SCREEN MARGINS & REMOVE BOTTOM WHITESPACE
        ==================================================== */
     .block-container {
         padding-top: 1.2rem !important;
-        padding-bottom: 0.5rem !important;
+        padding-bottom: 0rem !important;
         padding-left: 1rem !important;
         padding-right: 1rem !important;
+        max-width: 100% !important;
     }
 
+    /* ====================================================
+       3. GLOBAL APP DARK THEME & SLEEPER CARD STYLES
+       ==================================================== */
     .stApp {
         background-color: #0d131d;
         color: #f1f5f9;
