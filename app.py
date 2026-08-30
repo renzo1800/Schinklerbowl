@@ -2,35 +2,89 @@ import streamlit as st
 import requests
 import pandas as pd
 import os
-import base64
 from itertools import combinations
 
-# ==========================================
-# AUTO-ENFORCE EMBED MODE (NO FOOTER/HEADER)
-# ==========================================
 # ==========================================
 # DEFAULT LEAGUE CONFIGURATION
 # ==========================================
 DEFAULT_LEAGUE_ID = "1312109425275736064"
 BASE_URL = "https://api.sleeper.app/v1"
 
-# Load local logo.png as base64 for reliable in-card rendering
-def get_base64_logo():
-    if os.path.exists("logo.png"):
-        with open("logo.png", "rb") as f:
-            data = f.read()
-            return f"data:image/png;base64,{base64.b64encode(data).decode()}"
-    return None
-
-LOGO_B64 = get_base64_logo()
-
 st.set_page_config(
     page_title="Schinklerbowl Trade Tracker",
-    page_icon="logo.png" if os.path.exists("logo.png") else "🏈",
+    page_icon="🏈",
     layout="wide"
 )
 
-# --- Enhanced Sleeper Aesthetic & Glassmorphism Stylesheet ---
+# Inline SVG Logo with pure transparency
+LOGO_SVG = """
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="120" height="120" style="flex-shrink: 0; filter: drop-shadow(0 6px 16px rgba(0, 206, 184, 0.4));">
+  <defs>
+    <linearGradient id="sleeperTeal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="45%" stop-color="#00ceb8"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <linearGradient id="chalkAccent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#94a3b8"/>
+      <stop offset="100%" stop-color="#475569"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Playbook Grid Markings -->
+  <g stroke="#2a374f" stroke-width="3" stroke-dasharray="8,8">
+    <line x1="60" y1="170" x2="452" y2="170"/>
+    <line x1="60" y1="340" x2="452" y2="340"/>
+  </g>
+
+  <!-- Playbook Elements -->
+  <circle cx="95" cy="115" r="22" fill="none" stroke="url(#chalkAccent)" stroke-width="10"/>
+  
+  <g stroke="#38bdf8" stroke-width="10" stroke-linecap="round" opacity="0.9">
+    <line x1="400" y1="95" x2="440" y2="135"/>
+    <line x1="440" y1="95" x2="400" y2="135"/>
+  </g>
+
+  <g stroke="url(#chalkAccent)" stroke-width="10" stroke-linecap="round">
+    <line x1="80" y1="380" x2="120" y2="420"/>
+    <line x1="120" y1="380" x2="80" y2="420"/>
+  </g>
+
+  <!-- Bold Sleeper 'S' Spine -->
+  <path d="M 375 145 
+           C 375 90, 305 70, 245 70 
+           C 175 70, 135 110, 135 170 
+           C 135 240, 370 220, 370 335 
+           C 370 410, 305 440, 235 440 
+           C 165 440, 125 395, 125 355" 
+        fill="none" 
+        stroke="url(#sleeperTeal)" 
+        stroke-width="52" 
+        stroke-linecap="round" 
+        stroke-linejoin="round"/>
+
+  <!-- Math Keys (+) and (-) -->
+  <g transform="translate(375, 145)">
+    <circle cx="0" cy="0" r="30" fill="#0f172a" stroke="#38bdf8" stroke-width="5"/>
+    <line x1="-14" y1="0" x2="14" y2="0" stroke="#38bdf8" stroke-width="6" stroke-linecap="round"/>
+    <line x1="0" y1="-14" x2="0" y2="14" stroke="#38bdf8" stroke-width="6" stroke-linecap="round"/>
+  </g>
+
+  <g transform="translate(125, 355)">
+    <circle cx="0" cy="0" r="30" fill="#0f172a" stroke="#ef4444" stroke-width="5"/>
+    <line x1="-14" y1="0" x2="14" y2="0" stroke="#ef4444" stroke-width="6" stroke-linecap="round"/>
+  </g>
+
+  <!-- Equals Badge -->
+  <g transform="translate(395, 395)">
+    <rect x="-34" y="-26" width="68" height="52" rx="14" fill="#00ceb8"/>
+    <line x1="-15" y1="-7" x2="15" y2="-7" stroke="#062e28" stroke-width="6" stroke-linecap="round"/>
+    <line x1="-15" y1="7" x2="15" y2="7" stroke="#062e28" stroke-width="6" stroke-linecap="round"/>
+  </g>
+</svg>
+"""
+
+# --- Enhanced Sleeper Aesthetic Stylesheet ---
 st.markdown("""
 <style>
     /* 1. Global Reset & Dark Mode Theme */
@@ -58,30 +112,22 @@ st.markdown("""
         max-width: 100% !important;
     }
 
-    /* 3. Hero Header with Integrated Logo & Ambient Glow */
+    /* 3. Hero Header with Integrated Transparent Vector Logo */
     .hero-container {
-        background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%);
-        border: 1px solid rgba(0, 206, 184, 0.35);
-        border-radius: 18px;
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.75) 0%, rgba(15, 23, 42, 0.95) 100%);
+        border: 1px solid rgba(0, 206, 184, 0.4);
+        border-radius: 20px;
         padding: 24px 30px;
-        margin-bottom: 18px;
+        margin-bottom: 20px;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 24px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
-        backdrop-filter: blur(10px);
-    }
-    .hero-logo {
-        width: 110px;               /* Increased size from 72px */
-        height: auto;               /* Keeps natural aspect ratio */
-        background: transparent;    /* Eliminates any background fill */
-        border: none !important;    /* Removes the bounding box border */
-        box-shadow: none !important;/* Removes box shadow */
-        filter: drop-shadow(0 4px 12px rgba(0, 206, 184, 0.35)); /* Neon logo glow */
+        gap: 28px;
+        box-shadow: 0 10px 36px rgba(0, 0, 0, 0.5), 0 0 24px rgba(0, 206, 184, 0.15);
+        backdrop-filter: blur(12px);
     }
     .hero-title {
-        font-size: 2.2rem;
+        font-size: 2.35rem;
         font-weight: 900;
         background: linear-gradient(90deg, #00ceb8 0%, #38bdf8 60%, #818cf8 100%);
         -webkit-background-clip: text;
@@ -91,8 +137,8 @@ st.markdown("""
     }
     .hero-subtitle {
         color: #94a3b8;
-        font-size: 0.92rem;
-        margin-top: 2px;
+        font-size: 0.96rem;
+        margin-top: 4px;
         font-weight: 500;
     }
 
@@ -386,12 +432,10 @@ def process_trade_metrics(raw_trades, weekly_points, weekly_starters, player_nam
         })
     return processed
 
-# --- Hero Banner with Integrated Logo ---
-logo_html = f'<img src="{LOGO_B64}" class="hero-logo" />' if LOGO_B64 else '<span style="font-size: 2.8rem;">🏈</span>'
-
+# --- Hero Banner with Guaranteed Transparent Logo ---
 st.markdown(f"""
 <div class="hero-container">
-    {logo_html}
+    {LOGO_SVG}
     <div>
         <div class="hero-title">Schinklerbowl Trade Tracker</div>
         <div class="hero-subtitle">Real-time cumulative trade points, manager ROI, and historical fleece metrics</div>
