@@ -4,13 +4,10 @@ import pandas as pd
 from itertools import combinations
 
 # ==========================================
-# DEFAULT LEAGUE ID & ASSETS CONFIGURED
+# DEFAULT LEAGUE ID CONFIGURED
 # ==========================================
 DEFAULT_LEAGUE_ID = "1312109425275736064"
 BASE_URL = "https://api.sleeper.app/v1"
-
-# Automatically resolves to your GitHub-hosted logo if uploaded as logo.png
-LOGO_URL = "https://raw.githubusercontent.com/renzo1800/schinklerbowl/main/logo.png"
 
 st.set_page_config(
     page_title="Schinklerbowl Trade Tracker",
@@ -19,33 +16,40 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- Dynamic App Icon Header & Mobile-Native Styling ---
-st.markdown(f"""
-<head>
-    <link rel="apple-touch-icon" sizes="180x180" href="{LOGO_URL}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{LOGO_URL}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{LOGO_URL}">
-</head>
+# --- Sleeper Dark Theme & Full Header/Footer Elimination ---
+st.markdown("""
 <style>
-    /* Hide Streamlit Native Top Bar, Hamburger Menu, and Footer */
-    #MainMenu {{visibility: hidden;}}
-    header {{visibility: hidden;}}
-    footer {{visibility: hidden;}}
+    /* ====================================================
+       1. COMPLETE HIDE: HEADER, FOOTER, TOOLBAR & WATERMARK
+       ==================================================== */
+    #MainMenu {visibility: hidden !important; display: none !important;}
+    header {visibility: hidden !important; display: none !important;}
+    footer {visibility: hidden !important; display: none !important;}
     
-    /* Optimize Screen Margins for Mobile App Experience */
-    .block-container {{
-        padding-top: 1.5rem !important;
-        padding-bottom: 2rem !important;
+    [data-testid="stHeader"] {display: none !important;}
+    [data-testid="stToolbar"] {display: none !important;}
+    [data-testid="stDecoration"] {display: none !important;}
+    [data-testid="stStatusWidget"] {display: none !important;}
+    .stDeployButton {display: none !important;}
+    #viewer-badge {display: none !important;}
+    
+    /* ====================================================
+       2. TIGHTEN SCREEN MARGINS FOR CLEAN MOBILE/APP FEEL
+       ==================================================== */
+    .block-container {
+        padding-top: 1rem !important;
+        padding-bottom: 1.5rem !important;
         padding-left: 1rem !important;
         padding-right: 1rem !important;
-    }}
+    }
 
-    .stApp {{
+    .stApp {
         background-color: #0d131d;
         color: #f1f5f9;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }}
-    .hero-header {{
+    }
+    
+    .hero-header {
         background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
         border: 1px solid rgba(0, 206, 184, 0.3);
         border-radius: 16px;
@@ -53,37 +57,37 @@ st.markdown(f"""
         margin-bottom: 20px;
         text-align: center;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-    }}
-    .hero-title {{
+    }
+    .hero-title {
         font-size: 2.2rem;
         font-weight: 800;
         background: linear-gradient(90deg, #00ceb8, #38bdf8);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         margin-bottom: 4px;
-    }}
-    .champ-card {{
+    }
+    .champ-card {
         background: linear-gradient(145deg, #064e3b 0%, #022c22 100%);
         border: 2px solid #10b981;
         border-radius: 14px;
         padding: 16px;
         box-shadow: 0 6px 20px rgba(16, 185, 129, 0.2);
-    }}
-    .bitch-card {{
+    }
+    .bitch-card {
         background: linear-gradient(145deg, #7f1d1d 0%, #450a0a 100%);
         border: 2px solid #ef4444;
         border-radius: 14px;
         padding: 16px;
         box-shadow: 0 6px 20px rgba(239, 68, 68, 0.2);
-    }}
-    .mini-award-card {{
+    }
+    .mini-award-card {
         background: #151d2a;
         border: 1px solid #253347;
         border-radius: 12px;
         padding: 14px;
         height: 100%;
-    }}
-    .leaderboard-card {{
+    }
+    .leaderboard-card {
         background: #151d2a;
         border: 1px solid #222f44;
         border-radius: 14px;
@@ -93,27 +97,27 @@ st.markdown(f"""
         align-items: center;
         justify-content: space-between;
         transition: transform 0.15s ease, border-color 0.15s ease;
-    }}
-    .leaderboard-card:hover {{
+    }
+    .leaderboard-card:hover {
         border-color: #00ceb8;
         transform: translateY(-2px);
-    }}
-    .rank-badge {{
+    }
+    .rank-badge {
         font-size: 1.1rem;
         font-weight: 800;
         width: 32px;
         text-align: center;
         color: #94a3b8;
-    }}
-    .manager-avatar {{
+    }
+    .manager-avatar {
         width: 42px;
         height: 42px;
         border-radius: 50%;
         object-fit: cover;
         margin-right: 14px;
         border: 2px solid #2a374f;
-    }}
-    .net-pill-pos {{
+    }
+    .net-pill-pos {
         background-color: rgba(16, 185, 129, 0.15);
         color: #34d399;
         border: 1px solid #10b981;
@@ -121,8 +125,8 @@ st.markdown(f"""
         border-radius: 8px;
         font-weight: 800;
         font-size: 1.05rem;
-    }}
-    .net-pill-neg {{
+    }
+    .net-pill-neg {
         background-color: rgba(239, 68, 68, 0.15);
         color: #f87171;
         border: 1px solid #ef4444;
@@ -130,8 +134,8 @@ st.markdown(f"""
         border-radius: 8px;
         font-weight: 800;
         font-size: 1.05rem;
-    }}
-    .net-pill-even {{
+    }
+    .net-pill-even {
         background-color: rgba(148, 163, 184, 0.15);
         color: #cbd5e1;
         border: 1px solid #64748b;
@@ -139,30 +143,30 @@ st.markdown(f"""
         border-radius: 8px;
         font-weight: 800;
         font-size: 1.05rem;
-    }}
-    .trade-pill-container {{
+    }
+    .trade-pill-container {
         display: flex;
         flex-direction: column;
         gap: 5px;
         align-items: flex-end;
-    }}
-    .trade-pill {{
+    }
+    .trade-pill {
         display: inline-block;
         padding: 3px 10px;
         border-radius: 6px;
         font-size: 0.8rem;
         font-weight: 700;
-    }}
-    .pill-win {{
+    }
+    .pill-win {
         background-color: rgba(16, 185, 129, 0.15);
         color: #34d399;
         border: 1px solid #10b981;
-    }}
-    .pill-loss {{
+    }
+    .pill-loss {
         background-color: rgba(239, 68, 68, 0.15);
         color: #f87171;
         border: 1px solid #ef4444;
-    }}
+    }
 </style>
 """, unsafe_allow_html=True)
 
