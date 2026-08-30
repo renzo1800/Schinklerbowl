@@ -12,33 +12,24 @@ BASE_URL = "https://api.sleeper.app/v1"
 st.set_page_config(
     page_title="Schinklerbowl Trade Tracker",
     page_icon="🏈",
-    layout="wide",
-    initial_sidebar_state="collapsed"
+    layout="wide"
 )
 
-# --- Sleeper Dark Theme & Full Header/Footer Elimination ---
+# --- Sleeper Dark Theme CSS Injection ---
 st.markdown("""
 <style>
-    /* ====================================================
-       1. COMPLETE HIDE: HEADER, FOOTER, TOOLBAR & WATERMARK
-       ==================================================== */
+    /* Hide Streamlit Native Footers and Watermarks */
     #MainMenu {visibility: hidden !important; display: none !important;}
-    header {visibility: hidden !important; display: none !important;}
     footer {visibility: hidden !important; display: none !important;}
-    
-    [data-testid="stHeader"] {display: none !important;}
-    [data-testid="stToolbar"] {display: none !important;}
     [data-testid="stDecoration"] {display: none !important;}
     [data-testid="stStatusWidget"] {display: none !important;}
     .stDeployButton {display: none !important;}
     #viewer-badge {display: none !important;}
     
-    /* ====================================================
-       2. TIGHTEN SCREEN MARGINS FOR CLEAN MOBILE/APP FEEL
-       ==================================================== */
+    /* Screen Margins */
     .block-container {
-        padding-top: 1rem !important;
-        padding-bottom: 1.5rem !important;
+        padding-top: 1.2rem !important;
+        padding-bottom: 2rem !important;
         padding-left: 1rem !important;
         padding-right: 1rem !important;
     }
@@ -54,7 +45,7 @@ st.markdown("""
         border: 1px solid rgba(0, 206, 184, 0.3);
         border-radius: 16px;
         padding: 22px;
-        margin-bottom: 20px;
+        margin-bottom: 16px;
         text-align: center;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
     }
@@ -66,6 +57,15 @@ st.markdown("""
         -webkit-text-fill-color: transparent;
         margin-bottom: 4px;
     }
+    
+    .control-panel {
+        background-color: #151d2a;
+        border: 1px solid #253347;
+        border-radius: 14px;
+        padding: 16px 20px;
+        margin-bottom: 20px;
+    }
+
     .champ-card {
         background: linear-gradient(145deg, #064e3b 0%, #022c22 100%);
         border: 2px solid #10b981;
@@ -344,25 +344,6 @@ def process_trade_metrics(raw_trades, weekly_points, weekly_starters, player_nam
         })
     return processed
 
-# --- Sidebar Controls ---
-with st.sidebar:
-    st.header("⚡ League Controls")
-    use_demo = st.checkbox("🧪 Preview Demo Mode", value=False)
-    scoring_mode = st.radio("📈 Points Calculation:", ["All Fantasy Points", "Started Lineup Points Only"], index=0)
-    only_starters = (scoring_mode == "Started Lineup Points Only")
-    st.divider()
-    active_league_id = st.text_input("League ID", value=DEFAULT_LEAGUE_ID, disabled=use_demo)
-    
-    selected_id = active_league_id
-    if not use_demo and active_league_id:
-        season_history = discover_all_seasons(active_league_id)
-        if len(season_history) > 1:
-            selected_season_label = st.selectbox("Select Season", options=list(season_history.keys()))
-            selected_id = season_history[selected_season_label]
-        elif len(season_history) == 1:
-            st.caption(f"Showing: {list(season_history.keys())[0]}")
-    st.divider()
-
 # --- Main Dashboard Header ---
 st.markdown("""
 <div class="hero-header">
@@ -371,12 +352,38 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+# --- On-Page Controls Toolbar ---
+with st.container():
+    ctrl_col1, ctrl_col2, ctrl_col3 = st.columns([1.5, 1.5, 1])
+    
+    with ctrl_col3:
+        use_demo = st.checkbox("🧪 Preview Demo", value=False, help="Toggle sample trade data before real trades happen.")
+        
+    with ctrl_col1:
+        selected_id = DEFAULT_LEAGUE_ID
+        if not use_demo:
+            season_history = discover_all_seasons(DEFAULT_LEAGUE_ID)
+            if len(season_history) > 1:
+                selected_label = st.selectbox("📅 Select Season Year", options=list(season_history.keys()))
+                selected_id = season_history[selected_label]
+            elif len(season_history) == 1:
+                st.selectbox("📅 Season", options=[list(season_history.keys())[0]], disabled=True)
+        else:
+            st.selectbox("📅 Season", options=["2024 Demo Season"], disabled=True)
+
+    with ctrl_col2:
+        scoring_mode = st.radio("📈 Points Scoring Mode", ["All Points", "Starters Only"], horizontal=True)
+        only_starters = (scoring_mode == "Starters Only")
+
+st.divider()
+
 # Data Fetching
 if use_demo:
     trades_data = get_mock_trades()
 else:
-    raw_trades, weekly_points, weekly_starters, player_names = fetch_raw_league_data(selected_id)
-    trades_data = process_trade_metrics(raw_trades, weekly_points, weekly_starters, player_names, only_starters)
+    with st.spinner("Crunching Sleeper trade history..."):
+        raw_trades, weekly_points, weekly_starters, player_names = fetch_raw_league_data(selected_id)
+        trades_data = process_trade_metrics(raw_trades, weekly_points, weekly_starters, player_names, only_starters)
 
 if trades_data:
     # 1. Compile Manager Standings & Trade Records
@@ -636,4 +643,4 @@ if trades_data:
                     st.metric(label="Total Points Acquired", value=f"{pts_b} pts")
 
 elif not use_demo and selected_id:
-    st.info("No completed trades found for this season yet. Toggle **Preview Demo Mode** in the sidebar to see how all the awards, feud matrix, and ROI stats look!")
+    st.info("No completed trades found for this season yet. Toggle **Preview Demo** in the top toolbar to see all awards and sample data!")
