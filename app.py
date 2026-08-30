@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import requests
 import pandas as pd
 from itertools import combinations
@@ -15,29 +16,76 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- Reinforced Sleeper Dark Theme & Strict Footer/Header Elimination ---
+# --- JavaScript Engine to Eliminate Streamlit Cloud Parent-Level Footers ---
+components.html(
+    """
+    <script>
+    function removeParentFooters() {
+        try {
+            const targets = [
+                'footer',
+                '[data-testid="stFooter"]',
+                '[data-testid="stBottom"]',
+                '#viewer-badge',
+                '.viewerBadge_container__1QSob',
+                'div[class*="viewerBadge"]',
+                'div[class*="stBottom"]',
+                'div[class*="StatusWidget"]',
+                'div[class*="FloatingMenu"]',
+                'div[class*="embeddedAppMetaInfoBar"]'
+            ];
+            
+            // Check current document
+            targets.forEach(selector => {
+                document.querySelectorAll(selector).forEach(el => el.remove());
+            });
+
+            // Check parent host document (Streamlit Cloud Outer Shell)
+            if (window.parent && window.parent.document) {
+                targets.forEach(selector => {
+                    window.parent.document.querySelectorAll(selector).forEach(el => {
+                        el.style.display = 'none';
+                        el.style.visibility = 'hidden';
+                        el.style.height = '0px';
+                        el.remove();
+                    });
+                });
+            }
+        } catch (e) {
+            // Suppress cross-origin security flags gracefully
+        }
+    }
+
+    // Run immediately and continuously observe dynamic insertions
+    removeParentFooters();
+    setInterval(removeParentFooters, 300);
+    </script>
+    """,
+    height=0,
+    width=0
+)
+
+# --- Reinforced Sleeper Dark Theme & Strict CSS Rules ---
 st.markdown("""
 <style>
-    /* ====================================================
-       1. ELIMINATE ALL STREAMLIT FOOTERS, BADGES & BOTTOM BARS
-       ==================================================== */
-    footer {display: none !important; visibility: hidden !important; height: 0px !important;}
-    [data-testid="stFooter"] {display: none !important; visibility: hidden !important; height: 0px !important;}
-    [data-testid="stBottom"] {display: none !important; visibility: hidden !important;}
-    [data-testid="stStatusWidget"] {display: none !important; visibility: hidden !important;}
-    [data-testid="stDecoration"] {display: none !important;}
-    .stDeployButton {display: none !important;}
-    #MainMenu {display: none !important; visibility: hidden !important;}
-    #viewer-badge {display: none !important;}
-    div[class*="viewerBadge"] {display: none !important;}
-    div[class*="stBottom"] {display: none !important;}
-    div[class*="StatusWidget"] {display: none !important;}
-    div[class*="FloatingMenu"] {display: none !important;}
-    div.embeddedAppMetaInfoBar_container {display: none !important;}
+    /* 1. Global CSS Overrides */
+    iframe[title="streamlit.components.v1.html"] {
+        display: none !important;
+        height: 0px !important;
+        position: absolute;
+    }
+    
+    footer, [data-testid="stFooter"], [data-testid="stBottom"], div[class*="stBottom"], #viewer-badge, div[class*="viewerBadge"] {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0px !important;
+    }
+    
+    #MainMenu, [data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stDecoration"], [data-testid="stStatusWidget"], .stDeployButton {
+        display: none !important;
+    }
 
-    /* ====================================================
-       2. TIGHTEN SCREEN MARGINS & REMOVE BOTTOM WHITESPACE
-       ==================================================== */
+    /* 2. Page Margins */
     .block-container {
         padding-top: 1.2rem !important;
         padding-bottom: 0rem !important;
@@ -46,15 +94,13 @@ st.markdown("""
         max-width: 100% !important;
     }
 
-    /* ====================================================
-       3. GLOBAL APP DARK THEME & SLEEPER CARD STYLES
-       ==================================================== */
     .stApp {
         background-color: #0d131d;
         color: #f1f5f9;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
     
+    /* 3. Sleeper Aesthetic Cards */
     .hero-header {
         background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
         border: 1px solid rgba(0, 206, 184, 0.3);
