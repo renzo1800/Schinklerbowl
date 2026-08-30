@@ -17,9 +17,22 @@ DEFAULT_LEAGUE_ID = "1312109425275736064"
 
 BASE_URL = "https://api.sleeper.app/v1"
 
-# --- Sleeper Dark Theme CSS Injection ---
+# --- Sleeper Dark Theme & Mobile-Native CSS Injection ---
 st.markdown("""
 <style>
+    /* Hide Streamlit Native Top Bar, Hamburger Menu, and Footer */
+    #MainMenu {visibility: hidden;}
+    header {visibility: hidden;}
+    footer {visibility: hidden;}
+    
+    /* Optimize Screen Margins for Mobile App Experience */
+    .block-container {
+        padding-top: 1.5rem !important;
+        padding-bottom: 2rem !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+
     .stApp {
         background-color: #0d131d;
         color: #f1f5f9;
@@ -370,7 +383,6 @@ if trades_data:
         diff_a = round(pts_a - pts_b, 1)
         diff_b = round(pts_b - pts_a, 1)
 
-        # Pairings for Frequent Flyers
         pair_key = tuple(sorted([tm_a, tm_b]))
         trade_pair_counts[pair_key] = trade_pair_counts.get(pair_key, 0) + 1
 
@@ -541,7 +553,6 @@ if trades_data:
             with m_col2:
                 man_b = st.selectbox("Select Manager B:", [m for m in all_managers if m != man_a], index=0)
 
-            # Filter direct trades
             direct_trades = []
             h2h_net_a = 0.0
 
