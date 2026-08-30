@@ -161,41 +161,41 @@ def get_mock_data():
     return [
         {
             "week": 3,
-            "team_a": "Gridiron Gurus",
+            "team_a": "Gridiron Gurus (@FantasyKing99)",
             "avatar_a": None,
             "players_a": ["CeeDee Lamb (WR)", "Isiah Pacheco (RB)"],
             "pts_a": 218.4,
-            "team_b": "Touchdown Titans",
+            "team_b": "Touchdown Titans (@JoshAllenFan)",
             "avatar_b": None,
             "players_b": ["Amon-Ra St. Brown (WR)"],
             "pts_b": 184.2,
-            "winner": "Gridiron Gurus",
+            "winner": "Gridiron Gurus (@FantasyKing99)",
             "margin": 34.2
         },
         {
             "week": 6,
-            "team_a": "Championship Bound",
+            "team_a": "Championship Bound (@DynastyBro)",
             "avatar_a": None,
             "players_a": ["Bijan Robinson (RB)"],
             "pts_a": 164.8,
-            "team_b": "Touchdown Titans",
+            "team_b": "Touchdown Titans (@JoshAllenFan)",
             "avatar_b": None,
             "players_b": ["Breece Hall (RB)"],
             "pts_b": 202.5,
-            "winner": "Touchdown Titans",
+            "winner": "Touchdown Titans (@JoshAllenFan)",
             "margin": 37.7
         },
         {
             "week": 8,
-            "team_a": "Gridiron Gurus",
+            "team_a": "Gridiron Gurus (@FantasyKing99)",
             "avatar_a": None,
             "players_a": ["Josh Allen (QB)"],
             "pts_a": 194.0,
-            "team_b": "Waiver Wire Kings",
+            "team_b": "Waiver Wire Kings (@BenchWarmer)",
             "avatar_b": None,
             "players_b": ["Patrick Mahomes (QB)"],
             "pts_b": 142.6,
-            "winner": "Gridiron Gurus",
+            "winner": "Gridiron Gurus (@FantasyKing99)",
             "margin": 51.4
         }
     ]
@@ -208,7 +208,18 @@ def fetch_trade_ledger(league_id):
         user_avatar_map = {}
         for u in users:
             uid = u["user_id"]
-            user_map[uid] = u.get("metadata", {}).get("team_name") or u.get("display_name", "Unknown")
+            username = u.get("display_name", "")
+            team_name = u.get("metadata", {}).get("team_name")
+            
+            # Format: Team Name (@username) or simply @username
+            if team_name and team_name != username:
+                formatted_name = f"{team_name} (@{username})"
+            elif username:
+                formatted_name = f"@{username}"
+            else:
+                formatted_name = f"User {uid}"
+                
+            user_map[uid] = formatted_name
             avatar_id = u.get("avatar")
             user_avatar_map[uid] = f"https://sleepercdn.com/avatars/thumbs/{avatar_id}" if avatar_id else None
 
@@ -395,7 +406,6 @@ if trades:
     with tab_standings:
         st.subheader("Leaderboard")
         
-        # High-Energy Manager Standings Cards
         default_avatar = "https://sleepercdn.com/images/v2/icons/player_default.webp"
         
         for idx, row in standings_df.iterrows():
