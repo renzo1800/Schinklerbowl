@@ -80,7 +80,6 @@ st.markdown("""
         box-shadow: none !important;/* Removes box shadow */
         filter: drop-shadow(0 4px 12px rgba(0, 206, 184, 0.35)); /* Neon logo glow */
     }
-    }
     .hero-title {
         font-size: 2.2rem;
         font-weight: 900;
