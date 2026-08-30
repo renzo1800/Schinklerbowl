@@ -12,90 +12,22 @@ BASE_URL = "https://api.sleeper.app/v1"
 
 st.set_page_config(
     page_title="Schinklerbowl Trade Tracker",
-    page_icon="🏈",
+    page_icon="logo.png" if os.path.exists("logo.png") else "🏈",
     layout="wide"
 )
 
-# Inline SVG Logo with pure transparency
-LOGO_SVG = """
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="120" height="120" style="flex-shrink: 0; filter: drop-shadow(0 6px 16px rgba(0, 206, 184, 0.4));">
-  <defs>
-    <linearGradient id="sleeperTeal" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#38bdf8"/>
-      <stop offset="45%" stop-color="#00ceb8"/>
-      <stop offset="100%" stop-color="#059669"/>
-    </linearGradient>
-    <linearGradient id="chalkAccent" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#94a3b8"/>
-      <stop offset="100%" stop-color="#475569"/>
-    </linearGradient>
-  </defs>
-
-  <!-- Playbook Grid Markings -->
-  <g stroke="#2a374f" stroke-width="3" stroke-dasharray="8,8">
-    <line x1="60" y1="170" x2="452" y2="170"/>
-    <line x1="60" y1="340" x2="452" y2="340"/>
-  </g>
-
-  <!-- Playbook Elements -->
-  <circle cx="95" cy="115" r="22" fill="none" stroke="url(#chalkAccent)" stroke-width="10"/>
-  
-  <g stroke="#38bdf8" stroke-width="10" stroke-linecap="round" opacity="0.9">
-    <line x1="400" y1="95" x2="440" y2="135"/>
-    <line x1="440" y1="95" x2="400" y2="135"/>
-  </g>
-
-  <g stroke="url(#chalkAccent)" stroke-width="10" stroke-linecap="round">
-    <line x1="80" y1="380" x2="120" y2="420"/>
-    <line x1="120" y1="380" x2="80" y2="420"/>
-  </g>
-
-  <!-- Bold Sleeper 'S' Spine -->
-  <path d="M 375 145 
-           C 375 90, 305 70, 245 70 
-           C 175 70, 135 110, 135 170 
-           C 135 240, 370 220, 370 335 
-           C 370 410, 305 440, 235 440 
-           C 165 440, 125 395, 125 355" 
-        fill="none" 
-        stroke="url(#sleeperTeal)" 
-        stroke-width="52" 
-        stroke-linecap="round" 
-        stroke-linejoin="round"/>
-
-  <!-- Math Keys (+) and (-) -->
-  <g transform="translate(375, 145)">
-    <circle cx="0" cy="0" r="30" fill="#0f172a" stroke="#38bdf8" stroke-width="5"/>
-    <line x1="-14" y1="0" x2="14" y2="0" stroke="#38bdf8" stroke-width="6" stroke-linecap="round"/>
-    <line x1="0" y1="-14" x2="0" y2="14" stroke="#38bdf8" stroke-width="6" stroke-linecap="round"/>
-  </g>
-
-  <g transform="translate(125, 355)">
-    <circle cx="0" cy="0" r="30" fill="#0f172a" stroke="#ef4444" stroke-width="5"/>
-    <line x1="-14" y1="0" x2="14" y2="0" stroke="#ef4444" stroke-width="6" stroke-linecap="round"/>
-  </g>
-
-  <!-- Equals Badge -->
-  <g transform="translate(395, 395)">
-    <rect x="-34" y="-26" width="68" height="52" rx="14" fill="#00ceb8"/>
-    <line x1="-15" y1="-7" x2="15" y2="-7" stroke="#062e28" stroke-width="6" stroke-linecap="round"/>
-    <line x1="-15" y1="7" x2="15" y2="7" stroke="#062e28" stroke-width="6" stroke-linecap="round"/>
-  </g>
-</svg>
-"""
-
-# --- Enhanced Sleeper Aesthetic Stylesheet ---
+# --- Sleeper Theme Stylesheet ---
 st.markdown("""
 <style>
-    /* 1. Global Reset & Dark Mode Theme */
+    /* 1. Global App Theme */
     .stApp {
         background-color: #0b111a;
         color: #f1f5f9;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
-    /* 2. Strip Native Streamlit Distractions */
-    footer, [data-testid="stFooter"], [data-testid="stBottom"], #viewer-badge, div[class*="viewerBadge"], div[class*="stBottom"] {
+    /* 2. Strip Native Headers & Footers */
+    footer, [data-testid="stFooter"], [data-testid="stBottom"], #viewer-badge, div[class*="viewerBadge"] {
         display: none !important;
         visibility: hidden !important;
         height: 0px !important;
@@ -105,44 +37,30 @@ st.markdown("""
     }
 
     .block-container {
-        padding-top: 1rem !important;
+        padding-top: 1.2rem !important;
         padding-bottom: 1rem !important;
         padding-left: 1rem !important;
         padding-right: 1rem !important;
         max-width: 100% !important;
     }
 
-    /* 3. Hero Header with Integrated Transparent Vector Logo */
-    .hero-container {
-        background: linear-gradient(135deg, rgba(30, 41, 59, 0.75) 0%, rgba(15, 23, 42, 0.95) 100%);
-        border: 1px solid rgba(0, 206, 184, 0.4);
-        border-radius: 20px;
-        padding: 24px 30px;
-        margin-bottom: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 28px;
-        box-shadow: 0 10px 36px rgba(0, 0, 0, 0.5), 0 0 24px rgba(0, 206, 184, 0.15);
-        backdrop-filter: blur(12px);
-    }
-    .hero-title {
+    /* 3. Hero Titles */
+    .hero-title-text {
         font-size: 2.35rem;
         font-weight: 900;
         background: linear-gradient(90deg, #00ceb8 0%, #38bdf8 60%, #818cf8 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        margin: 0;
-        letter-spacing: -0.02em;
+        margin-bottom: 4px;
+        line-height: 1.2;
     }
-    .hero-subtitle {
+    .hero-sub-text {
         color: #94a3b8;
-        font-size: 0.96rem;
-        margin-top: 4px;
+        font-size: 1rem;
         font-weight: 500;
     }
 
-    /* 4. Podium Trophy Cards */
+    /* 4. Podium Cards */
     .champ-card {
         background: linear-gradient(145deg, #064e3b 0%, #022c22 100%);
         border: 2px solid #10b981;
@@ -172,7 +90,7 @@ st.markdown("""
         transform: translateY(-2px);
     }
 
-    /* 6. Leaderboard Manager Cards */
+    /* 6. Leaderboard Cards */
     .leaderboard-card {
         background: #141c28;
         border: 1px solid #233044;
@@ -204,7 +122,7 @@ st.markdown("""
         border: 2px solid #2a374f;
     }
 
-    /* 7. Badges & Trade Outcome Pills */
+    /* 7. Pills */
     .net-pill-pos {
         background-color: rgba(16, 185, 129, 0.15);
         color: #34d399;
@@ -432,16 +350,19 @@ def process_trade_metrics(raw_trades, weekly_points, weekly_starters, player_nam
         })
     return processed
 
-# --- Hero Banner with Guaranteed Transparent Logo ---
-st.markdown(f"""
-<div class="hero-container">
-    {LOGO_SVG}
-    <div>
-        <div class="hero-title">Schinklerbowl Trade Tracker</div>
-        <div class="hero-subtitle">Real-time cumulative trade points, manager ROI, and historical fleece metrics</div>
-    </div>
-</div>
-""", unsafe_allow_html=True)
+# --- Native Layout Header Banner ---
+with st.container(border=True):
+    col_logo, col_text = st.columns([1, 6], vertical_alignment="center")
+    with col_logo:
+        if os.path.exists("logo.png"):
+            st.image("logo.png", width=110)
+        else:
+            st.markdown("<div style='font-size: 4rem; text-align: center;'>🏈</div>", unsafe_allow_html=True)
+    with col_text:
+        st.markdown('<div class="hero-title-text">Schinklerbowl Trade Tracker</div>', unsafe_allow_html=True)
+        st.markdown('<div class="hero-sub-text">Real-time cumulative trade points, manager ROI, and historical fleece metrics</div>', unsafe_allow_html=True)
+
+st.write("")
 
 # --- On-Page Controls Toolbar ---
 with st.container():
