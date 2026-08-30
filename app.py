@@ -8,9 +8,6 @@ from itertools import combinations
 # ==========================================
 # AUTO-ENFORCE EMBED MODE (NO FOOTER/HEADER)
 # ==========================================
-if "embed" not in st.query_params:
-    st.query_params["embed"] = "true"
-
 # ==========================================
 # DEFAULT LEAGUE CONFIGURATION
 # ==========================================
