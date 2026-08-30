@@ -63,22 +63,23 @@ st.markdown("""
         background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%);
         border: 1px solid rgba(0, 206, 184, 0.35);
         border-radius: 18px;
-        padding: 20px 24px;
+        padding: 24px 30px;
         margin-bottom: 18px;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 20px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), 0 0 20px rgba(0, 206, 184, 0.12);
+        gap: 24px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
         backdrop-filter: blur(10px);
     }
     .hero-logo {
-        width: 72px;
-        height: 72px;
-        border-radius: 16px;
-        object-fit: cover;
-        box-shadow: 0 4px 14px rgba(0, 206, 184, 0.3);
-        border: 2px solid rgba(0, 206, 184, 0.4);
+        width: 110px;               /* Increased size from 72px */
+        height: auto;               /* Keeps natural aspect ratio */
+        background: transparent;    /* Eliminates any background fill */
+        border: none !important;    /* Removes the bounding box border */
+        box-shadow: none !important;/* Removes box shadow */
+        filter: drop-shadow(0 4px 12px rgba(0, 206, 184, 0.35)); /* Neon logo glow */
+    }
     }
     .hero-title {
         font-size: 2.2rem;
