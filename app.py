@@ -1,148 +1,138 @@
 import streamlit as st
-import streamlit.components.v1 as components
 import requests
 import pandas as pd
+import os
+import base64
 from itertools import combinations
 
 # ==========================================
-# DEFAULT LEAGUE ID CONFIGURED
+# AUTO-ENFORCE EMBED MODE (NO FOOTER/HEADER)
+# ==========================================
+if "embed" not in st.query_params:
+    st.query_params["embed"] = "true"
+
+# ==========================================
+# DEFAULT LEAGUE CONFIGURATION
 # ==========================================
 DEFAULT_LEAGUE_ID = "1312109425275736064"
 BASE_URL = "https://api.sleeper.app/v1"
 
+# Load local logo.png as base64 for reliable in-card rendering
+def get_base64_logo():
+    if os.path.exists("logo.png"):
+        with open("logo.png", "rb") as f:
+            data = f.read()
+            return f"data:image/png;base64,{base64.b64encode(data).decode()}"
+    return None
+
+LOGO_B64 = get_base64_logo()
+
 st.set_page_config(
     page_title="Schinklerbowl Trade Tracker",
-    page_icon="🏈",
+    page_icon="logo.png" if os.path.exists("logo.png") else "🏈",
     layout="wide"
 )
 
-# --- JavaScript Engine to Eliminate Streamlit Cloud Parent-Level Footers ---
-components.html(
-    """
-    <script>
-    function removeParentFooters() {
-        try {
-            const targets = [
-                'footer',
-                '[data-testid="stFooter"]',
-                '[data-testid="stBottom"]',
-                '#viewer-badge',
-                '.viewerBadge_container__1QSob',
-                'div[class*="viewerBadge"]',
-                'div[class*="stBottom"]',
-                'div[class*="StatusWidget"]',
-                'div[class*="FloatingMenu"]',
-                'div[class*="embeddedAppMetaInfoBar"]'
-            ];
-            
-            // Check current document
-            targets.forEach(selector => {
-                document.querySelectorAll(selector).forEach(el => el.remove());
-            });
-
-            // Check parent host document (Streamlit Cloud Outer Shell)
-            if (window.parent && window.parent.document) {
-                targets.forEach(selector => {
-                    window.parent.document.querySelectorAll(selector).forEach(el => {
-                        el.style.display = 'none';
-                        el.style.visibility = 'hidden';
-                        el.style.height = '0px';
-                        el.remove();
-                    });
-                });
-            }
-        } catch (e) {
-            // Suppress cross-origin security flags gracefully
-        }
-    }
-
-    // Run immediately and continuously observe dynamic insertions
-    removeParentFooters();
-    setInterval(removeParentFooters, 300);
-    </script>
-    """,
-    height=0,
-    width=0
-)
-
-# --- Reinforced Sleeper Dark Theme & Strict CSS Rules ---
+# --- Enhanced Sleeper Aesthetic & Glassmorphism Stylesheet ---
 st.markdown("""
 <style>
-    /* 1. Global CSS Overrides */
-    iframe[title="streamlit.components.v1.html"] {
-        display: none !important;
-        height: 0px !important;
-        position: absolute;
+    /* 1. Global Reset & Dark Mode Theme */
+    .stApp {
+        background-color: #0b111a;
+        color: #f1f5f9;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
-    
-    footer, [data-testid="stFooter"], [data-testid="stBottom"], div[class*="stBottom"], #viewer-badge, div[class*="viewerBadge"] {
+
+    /* 2. Strip Native Streamlit Distractions */
+    footer, [data-testid="stFooter"], [data-testid="stBottom"], #viewer-badge, div[class*="viewerBadge"], div[class*="stBottom"] {
         display: none !important;
         visibility: hidden !important;
         height: 0px !important;
     }
-    
     #MainMenu, [data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stDecoration"], [data-testid="stStatusWidget"], .stDeployButton {
         display: none !important;
     }
 
-    /* 2. Page Margins */
     .block-container {
-        padding-top: 1.2rem !important;
-        padding-bottom: 0rem !important;
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
         padding-left: 1rem !important;
         padding-right: 1rem !important;
         max-width: 100% !important;
     }
 
-    .stApp {
-        background-color: #0d131d;
-        color: #f1f5f9;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    /* 3. Hero Header with Integrated Logo & Ambient Glow */
+    .hero-container {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%);
+        border: 1px solid rgba(0, 206, 184, 0.35);
+        border-radius: 18px;
+        padding: 20px 24px;
+        margin-bottom: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), 0 0 20px rgba(0, 206, 184, 0.12);
+        backdrop-filter: blur(10px);
     }
-    
-    /* 3. Sleeper Aesthetic Cards */
-    .hero-header {
-        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-        border: 1px solid rgba(0, 206, 184, 0.3);
+    .hero-logo {
+        width: 72px;
+        height: 72px;
         border-radius: 16px;
-        padding: 22px;
-        margin-bottom: 16px;
-        text-align: center;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        object-fit: cover;
+        box-shadow: 0 4px 14px rgba(0, 206, 184, 0.3);
+        border: 2px solid rgba(0, 206, 184, 0.4);
     }
     .hero-title {
         font-size: 2.2rem;
-        font-weight: 800;
-        background: linear-gradient(90deg, #00ceb8, #38bdf8);
+        font-weight: 900;
+        background: linear-gradient(90deg, #00ceb8 0%, #38bdf8 60%, #818cf8 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        margin-bottom: 4px;
+        margin: 0;
+        letter-spacing: -0.02em;
     }
-    
+    .hero-subtitle {
+        color: #94a3b8;
+        font-size: 0.92rem;
+        margin-top: 2px;
+        font-weight: 500;
+    }
+
+    /* 4. Podium Trophy Cards */
     .champ-card {
         background: linear-gradient(145deg, #064e3b 0%, #022c22 100%);
         border: 2px solid #10b981;
-        border-radius: 14px;
-        padding: 16px;
-        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.2);
+        border-radius: 16px;
+        padding: 18px 20px;
+        box-shadow: 0 8px 24px rgba(16, 185, 129, 0.22);
     }
     .bitch-card {
         background: linear-gradient(145deg, #7f1d1d 0%, #450a0a 100%);
         border: 2px solid #ef4444;
-        border-radius: 14px;
-        padding: 16px;
-        box-shadow: 0 6px 20px rgba(239, 68, 68, 0.2);
+        border-radius: 16px;
+        padding: 18px 20px;
+        box-shadow: 0 8px 24px rgba(239, 68, 68, 0.22);
     }
+
+    /* 5. Mini Award Cards */
     .mini-award-card {
-        background: #151d2a;
-        border: 1px solid #253347;
-        border-radius: 12px;
-        padding: 14px;
+        background: #141c28;
+        border: 1px solid #233044;
+        border-radius: 14px;
+        padding: 14px 16px;
         height: 100%;
+        transition: transform 0.15s ease, border-color 0.15s ease;
     }
+    .mini-award-card:hover {
+        border-color: #38bdf8;
+        transform: translateY(-2px);
+    }
+
+    /* 6. Leaderboard Manager Cards */
     .leaderboard-card {
-        background: #151d2a;
-        border: 1px solid #222f44;
+        background: #141c28;
+        border: 1px solid #233044;
         border-radius: 14px;
         padding: 14px 18px;
         margin-bottom: 10px;
@@ -156,26 +146,28 @@ st.markdown("""
         transform: translateY(-2px);
     }
     .rank-badge {
-        font-size: 1.1rem;
+        font-size: 1.15rem;
         font-weight: 800;
         width: 32px;
         text-align: center;
         color: #94a3b8;
     }
     .manager-avatar {
-        width: 42px;
-        height: 42px;
+        width: 44px;
+        height: 44px;
         border-radius: 50%;
         object-fit: cover;
         margin-right: 14px;
         border: 2px solid #2a374f;
     }
+
+    /* 7. Badges & Trade Outcome Pills */
     .net-pill-pos {
         background-color: rgba(16, 185, 129, 0.15);
         color: #34d399;
         border: 1px solid #10b981;
-        padding: 6px 12px;
-        border-radius: 8px;
+        padding: 6px 14px;
+        border-radius: 10px;
         font-weight: 800;
         font-size: 1.05rem;
     }
@@ -183,8 +175,8 @@ st.markdown("""
         background-color: rgba(239, 68, 68, 0.15);
         color: #f87171;
         border: 1px solid #ef4444;
-        padding: 6px 12px;
-        border-radius: 8px;
+        padding: 6px 14px;
+        border-radius: 10px;
         font-weight: 800;
         font-size: 1.05rem;
     }
@@ -192,8 +184,8 @@ st.markdown("""
         background-color: rgba(148, 163, 184, 0.15);
         color: #cbd5e1;
         border: 1px solid #64748b;
-        padding: 6px 12px;
-        border-radius: 8px;
+        padding: 6px 14px;
+        border-radius: 10px;
         font-weight: 800;
         font-size: 1.05rem;
     }
@@ -205,9 +197,9 @@ st.markdown("""
     }
     .trade-pill {
         display: inline-block;
-        padding: 3px 10px;
-        border-radius: 6px;
-        font-size: 0.8rem;
+        padding: 4px 12px;
+        border-radius: 8px;
+        font-size: 0.82rem;
         font-weight: 700;
     }
     .pill-win {
@@ -397,11 +389,16 @@ def process_trade_metrics(raw_trades, weekly_points, weekly_starters, player_nam
         })
     return processed
 
-# --- Main Dashboard Header ---
-st.markdown("""
-<div class="hero-header">
-    <div class="hero-title">🏆 Schinklerbowl Trade Tracker</div>
-    <div style="color: #94a3b8; font-size: 0.95rem;">Tracking cumulative net fantasy points, ROI, and lopsided fleeces across all deals</div>
+# --- Hero Banner with Integrated Logo ---
+logo_html = f'<img src="{LOGO_B64}" class="hero-logo" />' if LOGO_B64 else '<span style="font-size: 2.8rem;">🏈</span>'
+
+st.markdown(f"""
+<div class="hero-container">
+    {logo_html}
+    <div>
+        <div class="hero-title">Schinklerbowl Trade Tracker</div>
+        <div class="hero-subtitle">Real-time cumulative trade points, manager ROI, and historical fleece metrics</div>
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
