@@ -10,7 +10,7 @@ DEFAULT_LEAGUE_ID = "1312109425275736064"
 BASE_URL = "https://api.sleeper.app/v1"
 
 # Automatically resolves to your GitHub-hosted logo if uploaded as logo.png
-LOGO_URL = "https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/schinklerbowl/main/logo.png"
+LOGO_URL = "https://raw.githubusercontent.com/renzo1800/schinklerbowl/main/logo.png"
 
 st.set_page_config(
     page_title="Schinklerbowl Trade Tracker",
